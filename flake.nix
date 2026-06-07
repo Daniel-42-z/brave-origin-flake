@@ -24,6 +24,7 @@
             [
               "opt/brave.com/brave/brave-browser"
               "opt/brave.com/brave"
+              "brave-browser,com.brave.Browser"
               "brave-browser.xml"
               "brave-browser.desktop"
               "com.brave.Browser.desktop"
@@ -33,6 +34,7 @@
             [
               "opt/brave.com/brave-origin/brave-origin"
               "opt/brave.com/brave-origin"
+              "brave-origin,com.brave.Origin"
               "brave-origin.xml"
               "brave-origin.desktop"
               "com.brave.Origin.desktop"
