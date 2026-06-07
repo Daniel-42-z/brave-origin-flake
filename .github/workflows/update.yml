@@ -1,0 +1,129 @@
+name: Update brave-origin
+
+on:
+  schedule:
+    # Run daily at 07:00 UTC
+    - cron: '0 7 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run update script
+        id: update
+        run: |
+          chmod +x scripts/update-version.sh
+
+          if ./scripts/update-version.sh 2>&1 | tee update_output.txt; then
+            echo "update_success=true" >> $GITHUB_OUTPUT
+
+            if git diff --quiet versions.json; then
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            else
+              NEW_VERSION=$(jq -r '."brave-origin".version' versions.json)
+              echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "update_success=false" >> $GITHUB_OUTPUT
+            echo "=== Update script failed ==="
+            cat update_output.txt
+            exit 1
+          fi
+
+      - name: Verify packages build
+        if: steps.update.outputs.has_changes == 'true'
+        run: |
+          echo "Running flake check..."
+          nix flake check
+          echo "Building brave-origin..."
+          nix build .#brave-origin --print-build-logs
+
+      - name: Create Pull Request
+        if: steps.update.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update brave-origin to ${{ steps.update.outputs.new_version }}"
+          title: "chore: update brave-origin to ${{ steps.update.outputs.new_version }}"
+          body: |
+            ## Brave Origin Update
+
+            This PR updates the brave-origin Nix package to version `${{ steps.update.outputs.new_version }}`.
+
+            ### Testing
+            - ✅ Built successfully
+            - ✅ Flake checks passed
+
+            ---
+            🤖 This PR was created automatically by the auto-update workflow.
+          branch: auto-update/brave-origin-${{ steps.update.outputs.new_version }}
+          delete-branch: true
+          labels: |
+            automated
+            update
+
+      - name: Enable auto-merge
+        if: steps.update.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ steps.update.outputs.new_version }}
+        run: |
+          MAX_ATTEMPTS=5
+          ATTEMPT=1
+          WAIT_TIME=5
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Looking for PR..."
+            PR_NUMBER=$(gh pr list --head "auto-update/brave-origin-$NEW_VERSION" --json number --jq '.[0].number')
+
+            if [ -n "$PR_NUMBER" ]; then
+              echo "Found PR #$PR_NUMBER"
+              if gh pr merge "$PR_NUMBER" --auto --squash; then
+                echo "✓ Auto-merge enabled for PR #$PR_NUMBER"
+                exit 0
+              else
+                echo "⚠ Failed to enable auto-merge, but PR exists"
+                exit 0
+              fi
+            fi
+
+            if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+              sleep $WAIT_TIME
+              WAIT_TIME=$((WAIT_TIME * 2))
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+      - name: Report status
+        if: always()
+        run: |
+          if [[ "${{ steps.update.outputs.update_success }}" == "true" ]]; then
+            if [[ "${{ steps.update.outputs.has_changes }}" == "true" ]]; then
+              echo "✅ Update successful! New version: ${{ steps.update.outputs.new_version }}"
+            else
+              echo "✅ Already at latest version"
+            fi
+          else
+            echo "❌ Update failed"
+            exit 1
+          fi
