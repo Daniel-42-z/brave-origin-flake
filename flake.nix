@@ -14,12 +14,33 @@
         braveOriginData = versions."brave-origin";
       in
       {
-        packages.brave-origin = pkgs.callPackage "${nixpkgs}/pkgs/by-name/br/brave/make-brave.nix" {} {
+        packages.brave-origin = (pkgs.callPackage "${nixpkgs}/pkgs/by-name/br/brave/make-brave.nix" {} {
           pname = "brave-origin";
           version = braveOriginData.version;
           hash = braveOriginData.hash;
           url = braveOriginData.url;
-        };
+        }).overrideAttrs (old: {
+          installPhase = builtins.replaceStrings
+            [
+              "opt/brave.com/brave/brave-browser"
+              "opt/brave.com/brave"
+              "brave-browser.xml"
+              "brave-browser.desktop"
+              "com.brave.Browser.desktop"
+              "/usr/bin/brave-browser-stable"
+              "brave-browser.png"
+            ]
+            [
+              "opt/brave.com/brave-origin/brave-origin"
+              "opt/brave.com/brave-origin"
+              "brave-origin.xml"
+              "brave-origin.desktop"
+              "com.brave.Origin.desktop"
+              "/usr/bin/brave-origin-stable"
+              "brave-origin.png"
+            ]
+            old.installPhase;
+        });
 
         packages.default = self.packages.${system}.brave-origin;
 
