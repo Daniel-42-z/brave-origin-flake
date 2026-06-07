@@ -42,6 +42,11 @@
               "brave-origin.png"
             ]
             old.installPhase;
+          
+          installCheckPhase = builtins.replaceStrings
+            [ "opt/brave.com/brave/brave" ]
+            [ "opt/brave.com/brave-origin/brave" ]
+            old.installCheckPhase;
         });
 
         packages.default = self.packages.${system}.brave-origin;
