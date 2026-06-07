@@ -15,18 +15,14 @@ Since Brave officially distributes Linux builds via their APT repositories, this
 
 ### Using Home Manager (Recommended)
 
-You can import the module and enable the browser directly in your Home Manager configuration:
+You can simply use the built-in `programs.brave` module and swap the package!
 
 ```nix
 { inputs, pkgs, ... }:
 {
-  imports = [
-    inputs.brave-origin.homeManagerModules.default
-  ];
-
-  # The options are exactly the same as the standard programs.brave module
-  programs.brave-browser = {
+  programs.brave = {
     enable = true;
+    package = inputs.brave-origin.packages.${pkgs.system}.default;
     
     # Example: install extensions
     extensions = [
@@ -40,6 +36,8 @@ You can import the module and enable the browser directly in your Home Manager c
   };
 }
 ```
+
+*Note: If you prefer, the flake also provides a `programs.brave-browser` Home Manager module (`inputs.brave-origin.homeManagerModules.default`) which wraps this exact configuration internally.*
 
 ### NixOS (System-wide)
 
