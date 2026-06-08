@@ -33,6 +33,7 @@
                 "com.brave.Browser.desktop"
                 "/usr/bin/brave-browser-stable"
                 "brave-browser.png"
+                "$out/bin/brave"
               ]
               [
                 "opt/brave.com/brave-origin/brave-origin"
@@ -43,13 +44,18 @@
                 "com.brave.Origin.desktop"
                 "/usr/bin/brave-origin-stable"
                 "brave-origin.png"
+                "$out/bin/brave-origin"
               ]
               old.installPhase;
             
             installCheckPhase = builtins.replaceStrings
               [ "opt/brave.com/brave/brave" ]
-              [ "opt/brave.com/brave-origin/brave" ]
+              [ "opt/brave.com/brave-origin/brave-origin" ]
               old.installCheckPhase;
+
+            meta = old.meta // {
+              mainProgram = "brave-origin";
+            };
           })
         ) {};
 
