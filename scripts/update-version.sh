@@ -9,7 +9,7 @@ PACKAGES=$(curl -s "$PACKAGES_URL")
 
 # Extract the version and filename for brave-origin
 # We look for the brave-origin package block
-BLOCK=$(echo "$PACKAGES" | awk -v RS= '/Package: brave-origin/')
+BLOCK=$(echo "$PACKAGES" | awk -v RS= '/Package: brave-origin/{print; exit}')
 
 if [ -z "$BLOCK" ]; then
     echo "Could not find brave-origin in APT repository."
