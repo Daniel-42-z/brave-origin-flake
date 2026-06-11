@@ -1,0 +1,3 @@
+Latest brave-origin version is 1.91.171
+Fetching new version and generating hash...
+Updated versions.json with version 1.91.171
