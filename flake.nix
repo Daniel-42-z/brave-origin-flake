@@ -48,7 +48,7 @@
               darwinStem = "Brave Origin";
               changelogFile = "CHANGELOG.md";
               homepage = "https://brave.com/";
-              innerBinary = "brave-origin";
+              innerBinary = "brave";
             }) {
               inherit vulkanSupport commandLineArgs;
             };
