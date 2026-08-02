@@ -53,43 +53,49 @@
               inherit vulkanSupport commandLineArgs;
             };
 
-            baseDerivation = if isOldNixpkgs then oldDerivation else newDerivation;
           in
-          baseDerivation.overrideAttrs (old: {
-            installPhase = builtins.replaceStrings
-              [
-                "opt/brave.com/brave/brave-browser"
-                "opt/brave.com/brave"
-                "brave-browser,com.brave.Browser"
-                "brave-browser.xml"
-                "brave-browser.desktop"
-                "com.brave.Browser.desktop"
-                "/usr/bin/brave-browser-stable"
-                "brave-browser.png"
-                "$out/bin/brave"
-              ]
-              [
-                "opt/brave.com/brave-origin/brave-origin"
-                "opt/brave.com/brave-origin"
-                "brave-origin,com.brave.Origin"
-                "brave-origin.xml"
-                "brave-origin.desktop"
-                "com.brave.Origin.desktop"
-                "/usr/bin/brave-origin-stable"
-                "brave-origin.png"
-                "$out/bin/brave-origin"
-              ]
-              old.installPhase;
-            
-            installCheckPhase = builtins.replaceStrings
-              [ "opt/brave.com/brave/brave" "opt/brave.com/brave-origin/brave" ]
-              [ "opt/brave.com/brave-origin/brave-origin" "opt/brave.com/brave-origin/brave-origin" ]
-              old.installCheckPhase;
+          if isOldNixpkgs then
+            oldDerivation.overrideAttrs (old: {
+              installPhase = builtins.replaceStrings
+                [
+                  "opt/brave.com/brave/brave-browser"
+                  "opt/brave.com/brave"
+                  "brave-browser,com.brave.Browser"
+                  "brave-browser.xml"
+                  "brave-browser.desktop"
+                  "com.brave.Browser.desktop"
+                  "/usr/bin/brave-browser-stable"
+                  "brave-browser.png"
+                  "$out/bin/brave"
+                ]
+                [
+                  "opt/brave.com/brave-origin/brave-origin"
+                  "opt/brave.com/brave-origin"
+                  "brave-origin,com.brave.Origin"
+                  "brave-origin.xml"
+                  "brave-origin.desktop"
+                  "com.brave.Origin.desktop"
+                  "/usr/bin/brave-origin-stable"
+                  "brave-origin.png"
+                  "$out/bin/brave-origin"
+                ]
+                old.installPhase;
+              
+              installCheckPhase = builtins.replaceStrings
+                [ "opt/brave.com/brave/brave" ]
+                [ "opt/brave.com/brave-origin/brave-origin" ]
+                old.installCheckPhase;
 
-            meta = old.meta // {
-              mainProgram = "brave-origin";
-            };
-          })
+              meta = old.meta // {
+                mainProgram = "brave-origin";
+              };
+            })
+          else
+            newDerivation.overrideAttrs (old: {
+              installCheckPhase = ''
+                $out/opt/brave.com/brave-origin/brave-origin --version
+              '';
+            })
         ) {};
 
         packages.default = self.packages.${system}.brave-origin;
