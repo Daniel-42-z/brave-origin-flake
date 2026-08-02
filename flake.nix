@@ -15,14 +15,47 @@
       in
       {
         packages.brave-origin = pkgs.lib.makeOverridable ({ vulkanSupport ? false, commandLineArgs ? "" }:
-          (pkgs.callPackage "${nixpkgs}/pkgs/by-name/br/brave/make-brave.nix" {
-            inherit vulkanSupport commandLineArgs;
-          } {
-            pname = "brave-origin";
-            version = braveOriginData.version;
-            hash = braveOriginData.hash;
-            url = braveOriginData.url;
-          }).overrideAttrs (old: {
+          let
+            isOldNixpkgs = builtins.pathExists "${nixpkgs}/pkgs/by-name/br/brave/make-brave.nix";
+            makeBravePath =
+              if isOldNixpkgs then
+                "${nixpkgs}/pkgs/by-name/br/brave/make-brave.nix"
+              else
+                "${nixpkgs}/pkgs/applications/networking/browsers/brave/make-brave.nix";
+            
+            oldDerivation = (pkgs.callPackage makeBravePath {
+              inherit vulkanSupport commandLineArgs;
+            } {
+              pname = "brave-origin";
+              version = braveOriginData.version;
+              hash = braveOriginData.hash;
+              url = braveOriginData.url;
+            });
+
+            newDerivation = pkgs.callPackage (import makeBravePath {
+              pname = "brave-origin";
+              version = braveOriginData.version;
+              archives = {
+                ${system} = {
+                  url = braveOriginData.url;
+                  hash = braveOriginData.hash;
+                };
+              };
+              flavor = "origin";
+              optStem = "brave-origin";
+              fileStem = "brave-origin";
+              appIdStem = "com.brave.Origin";
+              darwinStem = "Brave Origin";
+              changelogFile = "CHANGELOG.md";
+              homepage = "https://brave.com/";
+              innerBinary = "brave-origin";
+            }) {
+              inherit vulkanSupport commandLineArgs;
+            };
+
+            baseDerivation = if isOldNixpkgs then oldDerivation else newDerivation;
+          in
+          baseDerivation.overrideAttrs (old: {
             installPhase = builtins.replaceStrings
               [
                 "opt/brave.com/brave/brave-browser"
@@ -49,8 +82,8 @@
               old.installPhase;
             
             installCheckPhase = builtins.replaceStrings
-              [ "opt/brave.com/brave/brave" ]
-              [ "opt/brave.com/brave-origin/brave-origin" ]
+              [ "opt/brave.com/brave/brave" "opt/brave.com/brave-origin/brave" ]
+              [ "opt/brave.com/brave-origin/brave-origin" "opt/brave.com/brave-origin/brave-origin" ]
               old.installCheckPhase;
 
             meta = old.meta // {
