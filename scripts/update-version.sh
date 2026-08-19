@@ -9,15 +9,15 @@ PACKAGES=$(curl -s "$PACKAGES_URL")
 
 # Extract the version and filename for brave-origin
 # We look for the brave-origin package block
-BLOCK=$(echo "$PACKAGES" | awk -v RS= '/Package: brave-origin/{print; exit}')
+BLOCK=$(echo "$PACKAGES" 2>/dev/null | awk -v RS= '/Package: brave-origin/{print; exit}' || true)
 
 if [ -z "$BLOCK" ]; then
     echo "Could not find brave-origin in APT repository."
     exit 1
 fi
 
-VERSION=$(echo "$BLOCK" | grep '^Version:' | awk '{print $2}')
-FILENAME=$(echo "$BLOCK" | grep '^Filename:' | awk '{print $2}')
+VERSION=$(echo "$BLOCK" | awk '/^Version:/{print $2}')
+FILENAME=$(echo "$BLOCK" | awk '/^Filename:/{print $2}')
 
 if [ -z "$VERSION" ] || [ -z "$FILENAME" ]; then
     echo "Could not parse version or filename."
