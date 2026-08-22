@@ -1,7 +1,7 @@
 {
   "brave-origin": {
-    "version": "1.93.137",
-    "url": "https://brave-browser-apt-release.s3.brave.com/pool/main/b/brave-origin/brave-origin_1.93.137_amd64.deb",
-    "hash": "sha256-s3IzB7wh6N7K1kibmYegXI8dk4306sxX7az3SiY62EQ="
+    "version": "1.93.138",
+    "url": "https://brave-browser-apt-release.s3.brave.com/pool/main/b/brave-origin/brave-origin_1.93.138_amd64.deb",
+    "hash": "sha256-CbI1dW4m/3fjgMe7uvP/Pk/jcXDBEIq0/ttHKrlG5CU="
   }
 }
